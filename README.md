@@ -11,13 +11,24 @@ These tools work in tandem. When you ask Claude a question about a specific Reap
 
 ## Setup
 
-1. Follow [the instructions to configure Claude Desktop](https://modelcontextprotocol.io/quickstart/server#core-mcp-concepts) (or another MCP client) to use a custom MCP server. A sample config for this project is provided in `setup/claude_desktop_config.json`, but you'll need to adjust the path to your `uv` installation, your Reaper project directory, and this server's directory.
+1. **Configure Claude Desktop**
+   - Follow [the instructions to configure Claude Desktop](https://modelcontextprotocol.io/quickstart/server#core-mcp-concepts) for use with a custom MCP server
+   - Find the sample config in `setup/claude_desktop_config.json`
+   - Update the following paths in the config:
+     - Your `uv` installation path
+     - Your Reaper project directory
+     - This server's directory
 
-2. Open Claude Desktop and ask a question. You should provide the name of the Reaper project you want to ask about. It will can find any project in the directory you specified in the config.
+2. **Launch and Configure**
+   - Open Claude Desktop
+   - Look for the hammer icon in the bottom right of your chat box
+   - Click the hammer icon to verify you see two Reaper tools available:
+     - `find_reaper_projects`
+     - `parse_reaper_project`
+   ![Claude Desktop Tools](./docs/claude-desktop-tools.png)
 
-When you open Claude Desktop, you should see a hammer icon in the bottom right of your chat box. Click on that and you should see the two registered Reaper tools available.
-![Claude Desktop Tools](./docs/claude-desktop-tools.png)
-
-Once you see the tools, ask away! You're able to expand the boxes to see the data getting pulled from your Reaper project and passed to the LLM.
-
-![Claude Desktop Tools](./docs/example-question.png)
+3. **Start Using**
+   - Ask questions about your Reaper project
+   - Always include the name of the specific Reaper project you're asking about
+   - You can expand the tool boxes to see the raw project data being passed to Claude
+   ![Claude Desktop Tools](./docs/example-question.png)
