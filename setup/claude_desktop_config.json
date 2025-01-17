@@ -1,0 +1,15 @@
+{
+    "mcpServers": {
+        "reaper": {
+            "command": "/path/to/your/uv-installation/uv",
+            "args": [
+                "--directory",
+                "/path/to/this/repo/reaper-mcp-server/src",
+                "run",
+                "mcp_server.py",
+                "--reaper-projects-dir",
+                "/path/to/your/reaper/projects"
+            ]
+        }
+    }
+}
