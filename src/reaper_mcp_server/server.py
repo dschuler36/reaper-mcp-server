@@ -28,9 +28,7 @@ def create_server():
 
     return server
 
-def main():
-    server = create_server()
-    server.run(transport='stdio')
 
 if __name__ == '__main__':
-    main()
+    server = create_server()
+    server.run(transport='stdio')
