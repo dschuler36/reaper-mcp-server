@@ -27,7 +27,7 @@ These tools work in tandem. When you ask Claude a question about a specific Reap
      - `parse_reaper_project`
    ![Claude Desktop Tools](./docs/claude-desktop-tools.png)
 
-3. **Start Using**
+3. **Ask Away!**
    - Ask questions about your Reaper project
    - Always include the name of the specific Reaper project you're asking about
    - You can expand the tool boxes to see the raw project data being passed to Claude

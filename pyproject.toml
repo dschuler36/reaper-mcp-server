@@ -1,9 +1,28 @@
 [project]
 name = "reaper-mcp-server"
 version = "0.1.0"
-description = "MCP Server for interacting with Reaper projects"
-readme = "README.md"
-requires-python = ">=3.12"
-dependencies = [
-    "mcp[cli]>=1.2.0",
+authors = [
+    { name = "Your Name", email = "your.email@example.com" },
 ]
+description = "Your project description"
+requires-python = ">=3.10"
+dependencies = [
+    "mcp>=1.2.0",
+    "asyncio>=3.4.3",
+    "pytest>=8.3.4",
+]
+
+[tool.pytest.ini_options]
+pythonpath = [
+    "."
+]
+
+[tool.uv.sources]
+reaper-mcp-server = { workspace = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project.scripts]
+reaper-mcp-server = "reaper_mcp_server.server:main"
