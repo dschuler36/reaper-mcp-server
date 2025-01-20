@@ -1,6 +1,7 @@
 from typing import List, Dict, Optional
 
 from .reaper_dataclasses import Project, Track, FX
+from .utils import remove_empty_strings
 
 
 class RPPParser:
@@ -164,8 +165,8 @@ class RPPParser:
             mute=track_dict['mute'],
             solo=track_dict['solo'],
             type=track_dict['type'],
-            input_source=track_dict['input_source'],
-            audio_filepath=track_dict['audio_filepath'],
+            input_source=track_dict.get('input_source', ''),
+            audio_filepath=track_dict.get('audio_filepath', ''),
             fx_chain=track_dict['fx_chain'],
             automation=track_dict['automation'],
             peak_level=track_dict['peak_level'],
