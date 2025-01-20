@@ -1,10 +1,12 @@
 from typing import List, Dict, Optional
+
 from .reaper_dataclasses import Project, Track, FX
 
+
 class RPPParser:
-    MAX_ENCODED_DATA_LENGTH = 1024
     
     def __init__(self, file_path):
+        self.MAX_ENCODED_DATA_LENGTH = 1024
         self.file_path = file_path
         self.project = Project(
             name=file_path.split('/')[-1].rsplit('.', 1)[0],
@@ -90,7 +92,8 @@ class RPPParser:
             self.project.tempo = float(parts[1])
             self.project.time_signature = f"{parts[2]}/{parts[3]}"
 
-    def _create_empty_track(self) -> Dict:
+    @staticmethod
+    def _create_empty_track() -> Dict:
         return {
             'name': '',
             'volume': 1.0,
@@ -106,12 +109,14 @@ class RPPParser:
             'send_levels': []
         }
 
-    def _parse_name(self, line: str) -> str:
+    @staticmethod
+    def _parse_name(line: str) -> str:
         if '"' in line:
             return line.split('"')[1]
         return line.split(' ', 1)[1]
 
-    def _parse_vst_line(self, line: str) -> Dict:
+    @staticmethod
+    def _parse_vst_line(line: str) -> Dict:
         parts = line.split('"')
         fx_name = parts[1] if len(parts) > 1 else "Unknown"
         return {
@@ -120,17 +125,20 @@ class RPPParser:
             'bypassed': False
         }
 
-    def _parse_bypass(self, line: str) -> bool:
+    @staticmethod
+    def _parse_bypass(line: str) -> bool:
         parts = line.split()
         return bool(int(parts[1]))
 
-    def _parse_volpan(self, line: str) -> tuple[float, float]:
+    @staticmethod
+    def _parse_volpan( line: str) -> tuple[float, float]:
         parts = line.split()
         if len(parts) >= 3:
             return float(parts[1]), float(parts[2])
         return 1.0, 0.0
 
-    def _parse_mutesolo(self, line: str) -> tuple[bool, bool]:
+    @staticmethod
+    def _parse_mutesolo(line: str) -> tuple[bool, bool]:
         parts = line.split()
         if len(parts) >= 3:
             return bool(int(parts[1])), bool(int(parts[2]))
@@ -147,7 +155,8 @@ class RPPParser:
             bypassed=fx_dict['bypassed']
         )
 
-    def _create_track_from_dict(self, track_dict: Dict) -> Track:
+    @staticmethod
+    def _create_track_from_dict(track_dict: Dict) -> Track:
         return Track(
             name=track_dict['name'],
             volume=track_dict['volume'],

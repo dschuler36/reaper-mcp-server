@@ -1,12 +1,12 @@
-import json
 import argparse
+import json
 from dataclasses import asdict
 
 from mcp.server.fastmcp import FastMCP
-import mcp.server.stdio
 
 from .rpp_finder import RPPFinder
 from .rpp_parser import RPPParser
+
 
 def create_server():
     parser = argparse.ArgumentParser()
