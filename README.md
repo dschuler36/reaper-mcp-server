@@ -1,3 +1,5 @@
+[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/dschuler36-reaper-mcp-server-badge.png)](https://mseep.ai/app/dschuler36-reaper-mcp-server)
+
 # Reaper MCP Server
 
 This is a simple MCP server that connects a Reaper project to an MCP client like Claude Desktop and enables you to ask questions about the project.
