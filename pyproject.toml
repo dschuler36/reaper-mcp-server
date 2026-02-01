@@ -10,6 +10,10 @@ dependencies = [
     "mcp>=1.2.0",
     "asyncio>=3.4.3",
     "pytest>=8.3.4",
+    "soundfile>=0.12.1",
+    "numpy>=1.24.0",
+    "scipy>=1.10.0",
+    "pyloudnorm>=0.1.1",
 ]
 
 [tool.pytest.ini_options]
