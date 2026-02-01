@@ -1,6 +1,7 @@
+import os
 from typing import List, Dict, Optional
 
-from .reaper_dataclasses import Project, Track, FX
+from .reaper_dataclasses import Project, Track, FX, AudioItem
 from .utils import remove_empty_strings
 
 
@@ -28,6 +29,9 @@ class RPPParser:
         current_fx_chain: List[FX] = []
         in_fx_chain = False
         current_fx: Optional[Dict] = None
+        in_item_block = False
+        in_source_block = False
+        current_item: Optional[Dict] = None
         
         for line in lines:
             line = line.strip()
@@ -63,8 +67,8 @@ class RPPParser:
                 if current_fx:
                     current_fx_chain.append(self._create_fx(current_fx))
                     current_fx = None
-                
-                if not current_fx:
+                else:
+                    # Only close FX chain if there's no open FX (closing the FXCHAIN block itself)
                     in_fx_chain = False
                     if current_track:
                         current_track['fx_chain'] = current_fx_chain
@@ -79,7 +83,32 @@ class RPPParser:
                 mute, solo = self._parse_mutesolo(line)
                 current_track['mute'] = mute
                 current_track['solo'] = solo
-            
+
+            elif line.startswith('<ITEM') and current_track:
+                in_item_block = True
+                current_item = {'position': 0.0, 'length': 0.0, 'audio_filepath': ''}
+
+            elif line.startswith('POSITION') and in_item_block and current_item:
+                current_item['position'] = self._parse_position(line)
+
+            elif line.startswith('LENGTH') and in_item_block and current_item:
+                current_item['length'] = self._parse_length(line)
+
+            elif line.startswith('<SOURCE WAVE') and in_item_block:
+                in_source_block = True
+
+            elif line.startswith('FILE') and in_source_block and current_item:
+                current_item['audio_filepath'] = self._parse_file_path(line)
+
+            elif line == '>' and in_item_block:
+                if in_source_block:
+                    in_source_block = False
+                elif current_item:
+                    if current_track:
+                        current_track['items'].append(self._create_audio_item(current_item))
+                    current_item = None
+                    in_item_block = False
+
             elif line == '>' and track_stack:
                 finished_track = track_stack.pop()
                 if finished_track:
@@ -107,7 +136,8 @@ class RPPParser:
             'fx_chain': [],
             'automation': {},
             'peak_level': 0.0,
-            'send_levels': []
+            'send_levels': [],
+            'items': []
         }
 
     @staticmethod
@@ -157,6 +187,43 @@ class RPPParser:
         )
 
     @staticmethod
+    def _parse_position(line: str) -> float:
+        parts = line.split()
+        if len(parts) >= 2:
+            return float(parts[1])
+        return 0.0
+
+    @staticmethod
+    def _parse_length(line: str) -> float:
+        parts = line.split()
+        if len(parts) >= 2:
+            return float(parts[1])
+        return 0.0
+
+    def _parse_file_path(self, line: str) -> str:
+        # Extract path from FILE line (handles quoted paths)
+        if '"' in line:
+            path = line.split('"')[1]
+        else:
+            parts = line.split()
+            path = parts[1] if len(parts) > 1 else ''
+
+        # Resolve relative paths
+        if path and not os.path.isabs(path):
+            base_dir = os.path.dirname(self.file_path)
+            path = os.path.abspath(os.path.join(base_dir, path))
+
+        return path
+
+    @staticmethod
+    def _create_audio_item(item_dict: Dict) -> AudioItem:
+        return AudioItem(
+            position=item_dict['position'],
+            length=item_dict['length'],
+            audio_filepath=item_dict['audio_filepath']
+        )
+
+    @staticmethod
     def _create_track_from_dict(track_dict: Dict) -> Track:
         return Track(
             name=track_dict['name'],
@@ -170,5 +237,6 @@ class RPPParser:
             fx_chain=track_dict['fx_chain'],
             automation=track_dict['automation'],
             peak_level=track_dict['peak_level'],
-            send_levels=track_dict['send_levels']
+            send_levels=track_dict['send_levels'],
+            items=track_dict.get('items', [])
         )
