@@ -62,13 +62,10 @@ To see all data structures parsed from projects, check out the `src/reaper_mcp_s
 
 3. **Launch and Configure**
    - Open Claude Desktop
-   - Look for the hammer icon in the bottom right of your chat box
-   - Click the hammer icon to verify you see three Reaper tools available:
-     - `find_reaper_projects`
-     - `parse_reaper_project`
-     - `analyze_audio_files`
+   - Click the '+' icon on the chat box
+   - Click on 'Connectors' and you should see the 'reaper' connector enabled
 
-   ![Claude Desktop Tools](./docs/claude-desktop-tools.png)
+   ![Claude Desktop Connectors](./docs/claude-desktop-connectors.png)
 
 4. **Ask Away!**
    - Ask questions about your Reaper project
