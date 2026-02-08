@@ -11,6 +11,31 @@ This is an MCP server that connects Reaper projects to an MCP client like Claude
 
 These tools work in tandem. When you ask Claude a question about a specific Reaper project, it will use the `find_reaper_projects` tool to find the project, then use the `parse_reaper_project` tool to parse the project and answer your question.
 
+### Installed FX Discovery
+
+- **`list_installed_fx(plugin_type=None, search_query=None)`**: Lists all installed FX/plugins available in Reaper.
+
+  **Parameters:**
+  - `plugin_type` (optional): Filter by plugin type (VST2, VST3, AU, JS, CLAP)
+  - `search_query` (optional): Search plugins by name, manufacturer, or type
+
+  **Returns:** List of installed plugins including:
+  - Plugin name
+  - Plugin type (VST2, VST3, AU, JS, CLAP)
+  - File path
+  - Manufacturer (when available)
+
+  **Example Questions:**
+  - "What synth plugins do I have installed?"
+  - "Show me all my Waves plugins"
+  - "I'm looking for a warbly synth. What options do I have from my already installed plugins?"
+  - "List all my VST3 plugins"
+  - "Do I have any reverb plugins?"
+  - "What iZotope plugins do I have?"
+  - "Show me all my Audio Unit plugins"
+
+  **Note:** This tool scans your Reaper plugin cache files. If you recently installed new plugins and haven't scanned them in Reaper yet, they won't appear in the results. Make sure to open Reaper and let it scan for new plugins first.
+
 ### Audio Analysis
 
 - **`analyze_audio_files(project_path, track_filter=None)`**: Analyzes all audio files in a Reaper project for mixing feedback.
