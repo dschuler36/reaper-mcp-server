@@ -9,6 +9,7 @@ from .utils import remove_empty_strings
 from .rpp_finder import RPPFinder
 from .rpp_parser import RPPParser
 from .audio_analyzer import AudioAnalyzer
+from .fx_finder import FXFinder
 
 
 def create_server():
@@ -83,6 +84,31 @@ def create_server():
                     })
 
         return json.dumps(remove_empty_strings(results))
+
+    @server.tool()
+    def list_installed_fx(plugin_type: Optional[str] = None, search_query: Optional[str] = None):
+        """List all installed FX/plugins available in Reaper.
+
+        Args:
+            plugin_type: Optional filter by plugin type (VST2, VST3, AU, JS, CLAP)
+            search_query: Optional search query to filter by name, manufacturer, or type
+
+        Returns:
+            JSON with list of installed plugins including name, type, path, and manufacturer
+        """
+        fx_finder = FXFinder()
+
+        if search_query:
+            plugins = fx_finder.search_plugins(search_query)
+        elif plugin_type:
+            plugins = fx_finder.get_plugins_by_type(plugin_type)
+        else:
+            plugins = fx_finder.find_installed_plugins()
+
+        return json.dumps({
+            'total_count': len(plugins),
+            'plugins': plugins
+        })
 
     return server
 
