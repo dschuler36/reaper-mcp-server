@@ -5,11 +5,16 @@ from typing import Optional
 
 from mcp.server.fastmcp import FastMCP
 
-from .utils import remove_empty_strings
+from .utils import remove_empty_strings, sanitize_floats, truncate_encoded_params
 from .rpp_finder import RPPFinder
 from .rpp_parser import RPPParser
 from .audio_analyzer import AudioAnalyzer
 from .fx_finder import FXFinder
+
+
+def _serialize(payload) -> str:
+    """Shared output pipeline: truncate blobs, drop empties, make JSON-safe."""
+    return json.dumps(sanitize_floats(remove_empty_strings(truncate_encoded_params(payload))))
 
 
 def create_server():
@@ -28,62 +33,97 @@ def create_server():
     @server.tool()
     def parse_reaper_project(project_path: str):
         rpp_parser = RPPParser(project_path)
-        return json.dumps(remove_empty_strings(asdict(rpp_parser.project)))
+        return _serialize(asdict(rpp_parser.project))
 
     @server.tool()
-    def analyze_audio_files(project_path: str, track_filter: Optional[str] = None):
-        """Analyze audio files in a Reaper project for mixing feedback.
+    def analyze_audio_files(
+        project_path: str,
+        track_filter: Optional[str] = None,
+        whole_file: bool = False,
+    ):
+        """Analyze audio in a Reaper project for mixing feedback.
+
+        Measurements are taken from the source files on disk, so they are
+        pre-FX and pre-fader: a track running an amp sim or EQ will sound
+        nothing like its analysis.
 
         Args:
             project_path: Path to .RPP file
             track_filter: Optional substring to filter track names
+            whole_file: Analyze entire source files instead of only the region
+                each item actually plays. Off by default.
 
         Returns:
-            JSON with analysis results and warnings for each audio file
+            JSON with per-item analysis, warnings, and skipped items
         """
-        # Parse RPP to get tracks with items
         rpp_parser = RPPParser(project_path)
 
-        # Filter tracks if requested
         tracks = [t for t in rpp_parser.project.tracks
                   if not track_filter or track_filter.lower() in t.name.lower()]
 
-        # Analyze each audio file
         results = {
             'project_name': rpp_parser.project.name,
+            'signal_stage': 'pre-fx (raw source files, before FX chain and fader)',
             'analyzed_files': [],
+            'skipped': [],
             'errors': []
         }
 
+        # Identical regions of the same file measure identically, so analyse
+        # each distinct region once. Repeated items previously re-read and
+        # re-analysed the same file dozens of times per call.
+        cache = {}
+
         for track in tracks:
             for item in track.items:
-                try:
-                    analyzer = AudioAnalyzer(item.audio_filepath)
-                    analysis = analyzer.analyze()
-
-                    if analysis.error:
-                        results['errors'].append({
-                            'track_name': track.name,
-                            'audio_file': item.audio_filepath,
-                            'error': analysis.error
-                        })
-                    else:
-                        results['analyzed_files'].append({
-                            'track_name': track.name,
-                            'audio_file': item.audio_filepath,
-                            'position': item.position,
-                            'length': item.length,
-                            'analysis': asdict(analysis),
-                            'warnings': analysis.warnings
-                        })
-                except Exception as e:
-                    results['errors'].append({
+                if not item.audio_filepath:
+                    results['skipped'].append({
                         'track_name': track.name,
-                        'audio_file': item.audio_filepath,
-                        'error': str(e)
+                        'track_number': track.track_number,
+                        'item_name': item.name,
+                        'position': item.position,
+                        'reason': (
+                            'MIDI item - no audio source'
+                            if item.source_type == 'MIDI'
+                            else 'Item has no audio source'
+                        )
                     })
+                    continue
 
-        return json.dumps(remove_empty_strings(results))
+                if whole_file:
+                    start, length = 0.0, None
+                else:
+                    # An item plays LENGTH seconds of timeline, which consumes
+                    # LENGTH * playrate seconds of source from SOFFS.
+                    start = item.start_offset
+                    length = item.length * (item.playrate or 1.0)
+
+                key = (item.audio_filepath, round(start, 6), round(length or -1.0, 6))
+                if key not in cache:
+                    cache[key] = AudioAnalyzer(item.audio_filepath, start, length).analyze()
+                analysis = cache[key]
+
+                entry = {
+                    'track_name': track.name,
+                    'track_number': track.track_number,
+                    'item_name': item.name,
+                    'audio_file': item.audio_filepath,
+                    'position': item.position,
+                    'length': item.length,
+                    'item_muted': item.mute,
+                    'track_muted': track.mute,
+                }
+
+                if analysis.error:
+                    entry['error'] = analysis.error
+                    results['errors'].append(entry)
+                else:
+                    entry['analysis'] = asdict(analysis)
+                    entry['warnings'] = analysis.warnings
+                    results['analyzed_files'].append(entry)
+
+        results['distinct_regions_analyzed'] = len(cache)
+        return _serialize(results)
 
     @server.tool()
     def list_installed_fx(plugin_type: Optional[str] = None, search_query: Optional[str] = None):
@@ -113,6 +153,10 @@ def create_server():
     return server
 
 
+def main():
+    """Console-script entry point declared in pyproject.toml."""
+    create_server().run(transport='stdio')
+
+
 if __name__ == '__main__':
-    server = create_server()
-    server.run(transport='stdio')
+    main()

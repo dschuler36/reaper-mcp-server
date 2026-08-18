@@ -9,6 +9,10 @@ This is an MCP server that connects Reaper projects to an MCP client like Claude
 - **`find_reaper_projects`**: Finds all Reaper projects in the directory you specified in the config.
 - **`parse_reaper_project`**: Parses a Reaper project file (.RPP) and returns detailed information including tempo, tracks, FX chains, and audio items.
 
+  Each track carries its position and identity (`track_number` matching Reaper's display order, `guid`), its routing (`is_folder`/`folder_depth`, `main_send`, `receives`, `num_channels`, `midi_hardware_out`), and its mixer state (`volume`, `pan`, `mute`, `solo`). Each item carries `position`, `length`, `start_offset`, `playrate`, `mute`, fades, and every take — with the active take marked, since that is the one that plays.
+
+  `receives` entries name the source track by index and by name, which is what distinguishes a live signal path from a leftover track: a track with `main_send: false` does not reach the master, and its audio is only audible through whatever receives from it.
+
 These tools work in tandem. When you ask Claude a question about a specific Reaper project, it will use the `find_reaper_projects` tool to find the project, then use the `parse_reaper_project` tool to parse the project and answer your question.
 
 ### Installed FX Discovery
@@ -38,16 +42,17 @@ These tools work in tandem. When you ask Claude a question about a specific Reap
 
 ### Audio Analysis
 
-- **`analyze_audio_files(project_path, track_filter=None)`**: Analyzes all audio files in a Reaper project for mixing feedback.
+- **`analyze_audio_files(project_path, track_filter=None, whole_file=False)`**: Analyzes the audio in a Reaper project for mixing feedback.
 
   **Parameters:**
   - `project_path` (required): Path to the .RPP project file
   - `track_filter` (optional): Filter tracks by name (e.g., "Vocal" to analyze only vocal tracks)
+  - `whole_file` (optional): Analyze entire source files instead of only the region each item plays. Off by default.
 
   **Returns:** Comprehensive audio analysis including:
 
-  - **Level Analysis**: Peak levels, RMS, clipping detection
-  - **Frequency Analysis**: Spectral content, energy distribution across frequency bands
+  - **Level Analysis**: Peak levels, RMS, clipping detection, DC offset
+  - **Frequency Analysis**: Spectral centroid, and each band's share of total energy
   - **Stereo Imaging**: Stereo width, phase coherence, mono compatibility
   - **Dynamic Range & Loudness**: LUFS (loudness standards), true peak, crest factor
 
@@ -57,13 +62,22 @@ These tools work in tandem. When you ask Claude a question about a specific Reap
   - "Is my mix too loud for streaming platforms?"
   - "Are there any phase issues in my drum tracks?"
 
+  **What is measured:** By default each item is analyzed over exactly the region it plays — its source start offset, length, and playrate — not its whole source file. Distinct regions are analyzed once and reused, so an item repeated across the arrangement costs one measurement. MIDI items have no audio source and are listed under `skipped` rather than reported as errors.
+
+  **Frequency figures are relative.** Each band is reported as a share of that region's total spectral power (and the same share in dB). Absolute band energy scales with clip length, which makes a long file look tens of dB "hotter" than a short one of identical material and makes cross-file comparison meaningless.
+
+  **These numbers are pre-FX.** Analysis reads the source files from disk, so it reflects neither the track's FX chain nor its fader. On a track running an amp sim or heavy EQ, the analysis describes the raw DI, not what you hear. Every response is labelled `signal_stage: pre-fx`.
+
   **Warning Thresholds:**
   - Peak > -0.3 dBFS: Risk of clipping
   - Clipping detected: Digital distortion present
-  - Excessive low frequency energy (> -6 dB): Muddy mix
+  - 200–500 Hz more than 10 dB above 500–2000 Hz: Boxy low mids. Comparing these two bands to each other, rather than one band against the whole spectrum, is what keeps a bass part from being flagged simply for being a bass.
+  - Mean sample value > 0.001: DC offset
   - Phase coherence < 0.5: Phase cancellation issues
   - LUFS > -8: Too loud for streaming (Spotify target: -14 LUFS)
   - Crest factor < 6 dB: Possibly over-compressed
+
+  Loudness is reported as `null` rather than a stand-in value when it cannot be measured (regions shorter than 400 ms), and regions under 50 ms are measured but not warned about.
 
 To see all data structures parsed from projects, check out the `src/reaper_mcp_server/reaper_dataclasses.py` file.
 
