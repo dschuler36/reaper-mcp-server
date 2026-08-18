@@ -2,6 +2,10 @@
 
 This is an MCP server that connects Reaper projects to an MCP client like Claude Desktop, enabling you to ask questions about your projects and get comprehensive audio analysis for mixing feedback.
 
+The server purposely does not expose any tools that enables AI to directly update your project. If you're looking for AI to create your music for you, look elsewhere.
+
+However, if you want to learn how to make higher quality music or understand various nuances of music production, AI + this MCP server can help.
+
 ## Tools
 
 ### Project Discovery & Parsing
