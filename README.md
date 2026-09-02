@@ -85,31 +85,87 @@ To see all data structures parsed from projects, check out the `src/reaper_mcp_s
 
 ## Setup
 
-1. **Install Dependencies**
-   ```bash
-   uv venv
-   source .venv/bin/activate
+You need [uv](https://docs.astral.sh/uv/getting-started/installation/) installed. You do **not** need to clone this repo or create a virtualenv — `uvx` fetches, builds, and runs the server for you, and it manages its own Python.
 
-   uv pip install .
-   ```
+### 1. Configure Claude Desktop
 
-2. **Configure Claude Desktop**
-   - Follow [the instructions to configure Claude Desktop](https://modelcontextprotocol.io/quickstart/server#core-mcp-concepts) for use with a custom MCP server
-   - Find the sample config in `setup/claude_desktop_config.json`
-   - Update the following paths in the config:
-     - Your `uv` installation path
-     - Your Reaper project directory
-     - This server's directory
+Follow [the instructions to configure Claude Desktop](https://modelcontextprotocol.io/quickstart/server#core-mcp-concepts) for a custom MCP server, then use the sample in `setup/claude_desktop_config.json`:
 
-3. **Launch and Configure**
-   - Open Claude Desktop
-   - Click the '+' icon on the chat box
-   - Click on 'Connectors' and you should see the 'reaper' connector enabled
+```json
+{
+    "mcpServers": {
+        "reaper": {
+            "command": "/path/to/your/uv-installation/uvx",
+            "args": [
+                "--from",
+                "git+https://github.com/dschuler36/reaper-mcp-server",
+                "reaper-mcp-server",
+                "--reaper-projects-dir",
+                "/path/to/your/reaper/projects"
+            ]
+        }
+    }
+}
+```
 
-   ![Claude Desktop Connectors](./docs/claude-desktop-connectors.png)
+Two paths to fill in:
 
-4. **Ask Away!**
-   - Ask questions about your Reaper project
-   - Always include the name of the specific Reaper project you're asking about
-   - You can expand the tool boxes to see the raw project data being passed to Claude
-   ![Claude Desktop Tools](./docs/example-question.png)
+- **`uvx`** — use the absolute path, not bare `uvx`. Claude Desktop does not inherit your shell's `PATH`, so a bare command name will fail to launch. Run `which uvx` to find it (typically `~/.local/bin/uvx`).
+- **`--reaper-projects-dir`** — the directory holding your Reaper projects.
+
+To pick up new commits later, run `uvx --refresh --from git+https://github.com/dschuler36/reaper-mcp-server reaper-mcp-server --help` once, or restart Claude Desktop after clearing the uv cache.
+
+### Using Claude Code instead
+
+```bash
+claude mcp add reaper -- \
+  uvx --from git+https://github.com/dschuler36/reaper-mcp-server \
+  reaper-mcp-server --reaper-projects-dir /path/to/your/reaper/projects
+```
+
+### 2. Launch and Configure
+
+- Open Claude Desktop
+- Click the '+' icon on the chat box
+- Click on 'Connectors' and you should see the 'reaper' connector enabled
+
+![Claude Desktop Connectors](./docs/claude-desktop-connectors.png)
+
+### 3. Ask Away!
+
+- Ask questions about your Reaper project
+- Always include the name of the specific Reaper project you're asking about
+- You can expand the tool boxes to see the raw project data being passed to Claude
+
+![Claude Desktop Tools](./docs/example-question.png)
+
+## Running from a clone
+
+If you want to modify the server, clone it and point Claude at your working copy. `uv run` syncs the locked dependencies on every launch, so there is no separate install step:
+
+```bash
+git clone https://github.com/dschuler36/reaper-mcp-server
+cd reaper-mcp-server
+uv sync                       # optional — only needed for running tests
+uv run --group dev pytest
+```
+
+Then use `setup/claude_desktop_config_local.json`, which runs the server out of your clone:
+
+```json
+{
+    "mcpServers": {
+        "reaper": {
+            "command": "/path/to/your/uv-installation/uv",
+            "args": [
+                "--directory",
+                "/path/to/this/repo/reaper-mcp-server/",
+                "run",
+                "reaper-mcp-server",
+                "--reaper-projects-dir",
+                "/path/to/your/reaper/projects"
+            ]
+        }
+    }
+}
+```

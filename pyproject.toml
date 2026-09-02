@@ -2,18 +2,30 @@
 name = "reaper-mcp-server"
 version = "0.1.0"
 authors = [
-    { name = "Your Name", email = "your.email@example.com" },
+    { name = "dschuler36", email = "dschuler36@gmail.com" },
 ]
-description = "Your project description"
+description = "A read-only MCP server that lets AI clients inspect and analyze Reaper projects"
+readme = "README.md"
+license = { file = "LICENSE" }
 requires-python = ">=3.10"
 dependencies = [
-    "mcp>=1.2.0",
-    "asyncio>=3.4.3",
-    "pytest>=8.3.4",
+    "mcp>=1.2.0,<2",
     "soundfile>=0.12.1",
     "numpy>=1.24.0",
     "scipy>=1.10.0",
     "pyloudnorm>=0.1.1",
+]
+
+[project.urls]
+Homepage = "https://github.com/dschuler36/reaper-mcp-server"
+Repository = "https://github.com/dschuler36/reaper-mcp-server"
+
+[project.scripts]
+reaper-mcp-server = "reaper_mcp_server.server:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=8.3.4",
 ]
 
 [tool.pytest.ini_options]
@@ -21,12 +33,6 @@ pythonpath = [
     "."
 ]
 
-[tool.uv.sources]
-reaper-mcp-server = { workspace = true }
-
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
-
-[project.scripts]
-reaper-mcp-server = "reaper_mcp_server.server:main"
