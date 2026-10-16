@@ -37,6 +37,14 @@ LOW_MID_TILT_THRESHOLD_DB = 10.0
 # Mean sample value above which a region carries a real DC offset.
 DC_OFFSET_THRESHOLD = 0.001
 
+# Formats libsndfile can decode. Project files can point FILE at any path, so
+# anything else is refused rather than opened, which keeps a crafted project
+# from probing non-audio files on the machine.
+AUDIO_EXTENSIONS = {
+    '.wav', '.wave', '.bwf', '.w64', '.rf64', '.aif', '.aiff', '.aifc',
+    '.flac', '.ogg', '.oga', '.opus', '.mp3', '.caf',
+}
+
 
 class AudioAnalyzer:
     """Analyzes an audio file, or one region of it, for mixing feedback.
@@ -64,6 +72,9 @@ class AudioAnalyzer:
         try:
             if not self.audio_path:
                 return self._empty_result(error="No audio source for this item")
+
+            if os.path.splitext(self.audio_path)[1].lower() not in AUDIO_EXTENSIONS:
+                return self._empty_result(error=f"Unsupported audio file type: {self.audio_path}")
 
             if not os.path.exists(self.audio_path):
                 return self._empty_result(error=f"File not found: {self.audio_path}")

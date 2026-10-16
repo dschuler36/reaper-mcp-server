@@ -1,4 +1,5 @@
 import math
+import os
 from typing import Any, Union, Dict, List
 
 # Keys that must survive the empty-value filter. A track with no name still
@@ -8,6 +9,23 @@ from typing import Any, Union, Dict, List
 IDENTITY_KEYS = {'name', 'track_name', 'item_name'}
 
 DEFAULT_MAX_ENCODED_LENGTH = 1024
+
+
+def resolve_project_path(project_path: str, projects_dir: str) -> str:
+    """Return the real path of an .RPP file, refusing anything outside projects_dir.
+
+    Tool arguments come from the model, so a path like ``projects/../x`` or a
+    symlink out of the tree would otherwise let it open arbitrary files.
+    """
+    if not projects_dir:
+        raise ValueError("--reaper-projects-dir is not configured")
+    base = os.path.realpath(projects_dir)
+    real = os.path.realpath(project_path)
+    if os.path.commonpath([base, real]) != base:
+        raise ValueError(f"Project path is outside the projects directory: {project_path}")
+    if not real.lower().endswith('.rpp'):
+        raise ValueError(f"Not a Reaper project (.RPP) file: {project_path}")
+    return real
 
 
 def truncate_encoded_params(data: Any, max_length: int = DEFAULT_MAX_ENCODED_LENGTH) -> Any:
