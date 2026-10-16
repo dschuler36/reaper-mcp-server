@@ -5,7 +5,12 @@ from typing import Optional
 
 from mcp.server.fastmcp import FastMCP
 
-from .utils import remove_empty_strings, sanitize_floats, truncate_encoded_params
+from .utils import (
+    remove_empty_strings,
+    resolve_project_path,
+    sanitize_floats,
+    truncate_encoded_params,
+)
 from .rpp_finder import RPPFinder
 from .rpp_parser import RPPParser
 from .audio_analyzer import AudioAnalyzer
@@ -32,7 +37,7 @@ def create_server():
 
     @server.tool()
     def parse_reaper_project(project_path: str):
-        rpp_parser = RPPParser(project_path)
+        rpp_parser = RPPParser(resolve_project_path(project_path, args.reaper_projects_dir))
         return _serialize(asdict(rpp_parser.project))
 
     @server.tool()
@@ -48,7 +53,7 @@ def create_server():
         nothing like its analysis.
 
         Args:
-            project_path: Path to .RPP file
+            project_path: Path to .RPP file inside the projects directory
             track_filter: Optional substring to filter track names
             whole_file: Analyze entire source files instead of only the region
                 each item actually plays. Off by default.
@@ -56,7 +61,7 @@ def create_server():
         Returns:
             JSON with per-item analysis, warnings, and skipped items
         """
-        rpp_parser = RPPParser(project_path)
+        rpp_parser = RPPParser(resolve_project_path(project_path, args.reaper_projects_dir))
 
         tracks = [t for t in rpp_parser.project.tracks
                   if not track_filter or track_filter.lower() in t.name.lower()]

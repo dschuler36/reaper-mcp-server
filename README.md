@@ -47,7 +47,7 @@ These tools work in tandem. When you ask Claude a question about a specific Reap
 - **`analyze_audio_files(project_path, track_filter=None, whole_file=False)`**: Analyzes the audio in a Reaper project for mixing feedback.
 
   **Parameters:**
-  - `project_path` (required): Path to the .RPP project file
+  - `project_path` (required): Path to the .RPP project file. Must be inside `--reaper-projects-dir`.
   - `track_filter` (optional): Filter tracks by name (e.g., "Vocal" to analyze only vocal tracks)
   - `whole_file` (optional): Analyze entire source files instead of only the region each item plays. Off by default.
 
@@ -111,7 +111,7 @@ Follow [the instructions to configure Claude Desktop](https://modelcontextprotoc
 Two paths to fill in:
 
 - **`uvx`** — use the absolute path, not bare `uvx`. Claude Desktop does not inherit your shell's `PATH`, so a bare command name will fail to launch. Run `which uvx` to find it (typically `~/.local/bin/uvx`).
-- **`--reaper-projects-dir`** — the directory holding your Reaper projects.
+- **`--reaper-projects-dir`** — the directory holding your Reaper projects. The server only opens `.RPP` files inside it.
 
 To pick up new commits later, run `uvx --refresh --from git+https://github.com/dschuler36/reaper-mcp-server reaper-mcp-server --help` once, or restart Claude Desktop after clearing the uv cache.
 
