@@ -11,7 +11,7 @@ class RPPFinder:
         projects = []
         for root, _, files in os.walk(self.base_dir):
             for file in files:
-                if file.endswith('.RPP'):
+                if file.lower().endswith('.rpp'):
                     rel_path = os.path.relpath(root, self.base_dir)
                     projects.append({
                         'path': os.path.join(root, file),
